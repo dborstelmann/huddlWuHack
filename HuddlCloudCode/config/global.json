@@ -1,0 +1,11 @@
+{
+    "applications": {
+        "_default": {
+            "link": "huddl"
+        }, 
+        "huddl": {
+            "applicationId": "u1Py7bX1OAiTqDgjLaDQnSpUToxs2veMnsaqPoUP", 
+            "masterKey": "C3gKB8upYHPOQgXFu8oBPCpExjGiwzu6AcDcaA5E"
+        }
+    }
+}
