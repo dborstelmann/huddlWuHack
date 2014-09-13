@@ -6,7 +6,7 @@
 //
 
 #import <Parse/Parse.h>
-#import <ParseFacebookUtils/ParseFacebookUtils.h>
+#import <ParseFacebookUtils/PFFacebookUtils.h>
 
 // If you are using Facebook, uncomment this line
 // #import <ParseFacebookUtils/PFFacebookUtils.h>
@@ -19,6 +19,8 @@
 #pragma mark - UIApplicationDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
+    [[UIApplication sharedApplication] setStatusBarStyle:UIStatusBarStyleLightContent animated:NO];
+    
     // ****************************************************************************
     // Uncomment and fill in with your Parse credentials:
     [Parse setApplicationId:@"u1Py7bX1OAiTqDgjLaDQnSpUToxs2veMnsaqPoUP"
@@ -37,10 +39,15 @@
     [defaultACL setPublicReadAccess:YES];
 
     [PFACL setDefaultACL:defaultACL withAccessForCurrentUser:YES];
-
-    // Override point for customization after application launch.
-
-    self.window.rootViewController = self.viewController;
+    
+    if ([PFUser currentUser]) {
+        idList = [[NSMutableDictionary alloc] initWithDictionary:[[PFUser currentUser] objectForKey:@"listOfObjects"]];
+    }
+    
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:self.viewController];
+    [nav setNavigationBarHidden:YES];
+    
+    self.window.rootViewController = nav;
     [self.window makeKeyAndVisible];
 
     if (application.applicationState != UIApplicationStateBackground) {
@@ -61,12 +68,6 @@
     return YES;
 }
 
-/*
-
-///////////////////////////////////////////////////////////
-// Uncomment this method if you are using Facebook
-///////////////////////////////////////////////////////////
-
 - (BOOL)application:(UIApplication *)application
             openURL:(NSURL *)url
   sourceApplication:(NSString *)sourceApplication
@@ -74,7 +75,6 @@
     return [PFFacebookUtils handleOpenURL:url];
 }
 
- */
 
 - (void)application:(UIApplication *)application didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)newDeviceToken {
     [PFPush storeDeviceToken:newDeviceToken];

@@ -6,6 +6,7 @@
 //
 
 #import <Foundation/Foundation.h>
+#import <Parse/Parse.h>
 
 @class ParseStarterProjectViewController;
 
@@ -16,3 +17,16 @@
 @property (nonatomic, strong) IBOutlet ParseStarterProjectViewController *viewController;
 
 @end
+
+#define UIColorFromRGB(rgbValue) [UIColor colorWithRed:((float)((rgbValue & 0xFF0000) >> 16))/255.0 green:((float)((rgbValue & 0xFF00) >> 8))/255.0 blue:((float)(rgbValue & 0xFF))/255.0 alpha:1.0]
+
+static int facebookBlue = 0x3B5998;
+static int huddlOrange = 0xf15b25;
+static int lightGray = 0xD6D6D6;
+static int darkGray = 0x444444;
+
+NSString *facebookID;
+
+NSMutableDictionary *idList;
+
+PFObject *friendListObject;

@@ -24,6 +24,13 @@
 		09BEF34C13D51C3F001BBCDB /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 09BEF34B13D51C3F001BBCDB /* Security.framework */; };
 		2FCDD6B014A573F500295AAC /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 2FCDD6AF14A573F500295AAC /* QuartzCore.framework */; };
 		73471ADA19C3D8EC0031777A /* FacebookSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 73471AD919C3D8EC0031777A /* FacebookSDK.framework */; };
+		73471ADD19C3E8450031777A /* GroupTable.m in Sources */ = {isa = PBXBuildFile; fileRef = 73471ADC19C3E8450031777A /* GroupTable.m */; };
+		73BCF59019C4905F00F81D42 /* images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 73BCF58F19C4905F00F81D42 /* images.xcassets */; };
+		73BCF59219C4907900F81D42 /* bar1-01.png in Resources */ = {isa = PBXBuildFile; fileRef = 73BCF59119C4907900F81D42 /* bar1-01.png */; };
+		73BCF59419C4926100F81D42 /* beach1-01.png in Resources */ = {isa = PBXBuildFile; fileRef = 73BCF59319C4926000F81D42 /* beach1-01.png */; };
+		73BCF59619C4928C00F81D42 /* bbq1-01.png in Resources */ = {isa = PBXBuildFile; fileRef = 73BCF59519C4928C00F81D42 /* bbq1-01.png */; };
+		73BCF59819C4930800F81D42 /* huddl1-01.png in Resources */ = {isa = PBXBuildFile; fileRef = 73BCF59719C4930800F81D42 /* huddl1-01.png */; };
+		73BCF59A19C4946A00F81D42 /* login_facebook.png in Resources */ = {isa = PBXBuildFile; fileRef = 73BCF59919C4946A00F81D42 /* login_facebook.png */; };
 		743D7B6D157DA60100084B67 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 743D7B6C157DA60100084B67 /* CoreGraphics.framework */; };
 		817AD67C196B009E0014C796 /* Bolts.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 817AD67B196B009E0014C796 /* Bolts.framework */; };
 		81DDFD1919B4A60300BE649C /* Parse.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 81DDFD1719B4A60300BE649C /* Parse.framework */; };
@@ -61,6 +68,14 @@
 		6372FF551613CC42002132AF /* Social.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Social.framework; path = System/Library/Frameworks/Social.framework; sourceTree = SDKROOT; };
 		6372FF571613CC47002132AF /* AdSupport.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AdSupport.framework; path = System/Library/Frameworks/AdSupport.framework; sourceTree = SDKROOT; };
 		73471AD919C3D8EC0031777A /* FacebookSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = FacebookSDK.framework; path = ../../../Documents/FacebookSDK/FacebookSDK.framework; sourceTree = "<group>"; };
+		73471ADB19C3E8450031777A /* GroupTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GroupTable.h; sourceTree = "<group>"; };
+		73471ADC19C3E8450031777A /* GroupTable.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GroupTable.m; sourceTree = "<group>"; };
+		73BCF58F19C4905F00F81D42 /* images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = images.xcassets; sourceTree = "<group>"; };
+		73BCF59119C4907900F81D42 /* bar1-01.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "bar1-01.png"; sourceTree = "<group>"; };
+		73BCF59319C4926000F81D42 /* beach1-01.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "beach1-01.png"; sourceTree = "<group>"; };
+		73BCF59519C4928C00F81D42 /* bbq1-01.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "bbq1-01.png"; sourceTree = "<group>"; };
+		73BCF59719C4930800F81D42 /* huddl1-01.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "huddl1-01.png"; sourceTree = "<group>"; };
+		73BCF59919C4946A00F81D42 /* login_facebook.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = login_facebook.png; sourceTree = "<group>"; };
 		743D7B6C157DA60100084B67 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
 		817AD67B196B009E0014C796 /* Bolts.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Bolts.framework; sourceTree = "<group>"; };
 		81DDFD1719B4A60300BE649C /* Parse.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Parse.framework; sourceTree = "<group>"; };
@@ -149,6 +164,10 @@
 				09ABC08613A1D52E009C3FCF /* ParseStarterProjectViewController.h */,
 				09ABC08713A1D52E009C3FCF /* ParseStarterProjectViewController.m */,
 				09ABC08913A1D52E009C3FCF /* ParseStarterProjectViewController.xib */,
+				73471ADB19C3E8450031777A /* GroupTable.h */,
+				73471ADC19C3E8450031777A /* GroupTable.m */,
+				73BCF58F19C4905F00F81D42 /* images.xcassets */,
+				73BCF58E19C4903D00F81D42 /* Images */,
 				09ABC07813A1D52D009C3FCF /* Supporting Files */,
 			);
 			path = ParseStarterProject;
@@ -167,6 +186,18 @@
 				09ABC07E13A1D52D009C3FCF /* main.m */,
 			);
 			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		73BCF58E19C4903D00F81D42 /* Images */ = {
+			isa = PBXGroup;
+			children = (
+				73BCF59919C4946A00F81D42 /* login_facebook.png */,
+				73BCF59719C4930800F81D42 /* huddl1-01.png */,
+				73BCF59519C4928C00F81D42 /* bbq1-01.png */,
+				73BCF59319C4926000F81D42 /* beach1-01.png */,
+				73BCF59119C4907900F81D42 /* bar1-01.png */,
+			);
+			name = Images;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -229,12 +260,18 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				73BCF59819C4930800F81D42 /* huddl1-01.png in Resources */,
 				09ABC07C13A1D52D009C3FCF /* InfoPlist.strings in Resources */,
+				73BCF59019C4905F00F81D42 /* images.xcassets in Resources */,
+				73BCF59219C4907900F81D42 /* bar1-01.png in Resources */,
 				09ABC08513A1D52E009C3FCF /* MainWindow.xib in Resources */,
 				09ABC08B13A1D52E009C3FCF /* ParseStarterProjectViewController.xib in Resources */,
 				09144A7313C2997E00388B00 /* Entitlements.plist in Resources */,
+				73BCF59419C4926100F81D42 /* beach1-01.png in Resources */,
 				C4C51B571613CE0800959FDC /* Default.png in Resources */,
 				C4C51B581613CE0800959FDC /* Default-568h@2x.png in Resources */,
+				73BCF59619C4928C00F81D42 /* bbq1-01.png in Resources */,
+				73BCF59A19C4946A00F81D42 /* login_facebook.png in Resources */,
 				C4C51B591613CE0800959FDC /* Default@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -246,6 +283,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				73471ADD19C3E8450031777A /* GroupTable.m in Sources */,
 				09ABC07F13A1D52D009C3FCF /* main.m in Sources */,
 				09ABC08213A1D52D009C3FCF /* ParseStarterProjectAppDelegate.m in Sources */,
 				09ABC08813A1D52E009C3FCF /* ParseStarterProjectViewController.m in Sources */,
