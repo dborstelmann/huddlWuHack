@@ -1,9 +1,9 @@
-var data = [
+{"data": [
 	{"rating": 9.3 , "name": "Fountain on Locust", "price": "$", "categories": "ice cream"},
 	{"rating": 9.5, "name": "Pappy's Smokehouse", "price": "$$", "categories": "Barbecue"},
 	{"rating": 8.6, "name": "Bogart's Smokehouse", "price": "$", "categories": "Barbecue"},
 	{"rating": 8.6, "name": "The Cup", "price": "$", "categories": "Cupcake"},
-	{"rating": 8.2, "name": "Iron Barley, "price": "$$", "categories": "American"},
+	{"rating": 8.2, "name": "Iron Barley", "price": "$$", "categories": "American"},
 	{"rating": 9, "name": "Pi Pizzeria", "price": "$", "categories": "Pizza"},
 	{"rating": 9.1, "name": "Sweet Art", "price":"$$$", "categories": "Cafe"},
 	{"rating": 8.9, "name": "Blood & Sand", "price": "$$", "categories": "American"},
@@ -11,10 +11,9 @@ var data = [
 	{"rating": 8.3, "name": "Pint Size Bakery and Coffee", "price": "$", "categories": "Cafe"},
 	{"rating": 8.5, "name": "LeGrand's Market", "price": "$", "categories": "Delis"},
 	{"rating": 8.6, "name": "Sweetie Pies", "price": "$$", "categories": "Soul Food"},
-	{"rating": 8.1, "name": "The Boathouse", "price": "$$$", "categories": "American},
+	{"rating": 8.1, "name": "The Boathouse", "price": "$$$", "categories": "American"},
 	{"rating": 7.9, "name": "Anthonino's Taverna", "price": "$", "categories": "Italian"},
 	{"rating": 8.2, "name": "PW Pizza", "price": "$$", "categories": "Pizza"},
 	{"rating": 7.6, "name": "Ted Drewes Frozen Custard", "price": "$$", "categories": "Ice Cream"},
 	{"rating": 7.7, "name": "Sauce On The Side", "price":"$$$", "categories": "Italian"}
-
-] 
+]}
