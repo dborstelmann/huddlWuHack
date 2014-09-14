@@ -35,6 +35,13 @@ NSMutableArray *chatGroups;
 NSMutableDictionary *chatAll;
 NSMutableArray *currentGroupHuddlList;
 NSInteger currentChat;
+NSString *groupID;
+
+NSMutableArray *huddlList;
+NSMutableArray *currentHuddlData;
+NSString *huddlWhat;
+NSString *huddlWhen;
+NSString *huddlLocation;
 
 PFObject *friendListObject;
 PFObject *groupListObject;

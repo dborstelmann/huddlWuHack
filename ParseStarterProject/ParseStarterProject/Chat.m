@@ -28,6 +28,23 @@
 - (void)viewDidLoad
 {
     [self.tableView setBackgroundColor:UIColorFromRGB(lightGray)];
+    currentHuddlData = [[NSMutableArray alloc] init];
+    
+//    [PFCloud callFunctionInBackground:@"getHuddls"
+//                       withParameters:@{@"groupID": groupID}
+//                                block:^(NSArray *result, NSError *error) {
+//                                    if (!error) {
+//                                        NSLog(@"GET HUDDLS %@", result);
+//                                        [groupList removeAllObjects];
+//                                        groupList = [NSMutableArray arrayWithArray:result];
+//                                        [self.tableView reloadData];
+//                                        
+//                                        Huddl *huddlView = [[Huddl alloc] initWithStyle:UITableViewStylePlain];
+//                                        [self.navigationController pushViewController:huddlView animated:YES];
+//                                    }
+//                                    
+//                                    
+//    }];
     
     chatMessages = [[NSMutableArray alloc] init];
     
@@ -36,7 +53,7 @@
         chatMessages = temp[@"chats"];
         stringId = temp.objectId;
         [self.tableView reloadData];
-        autoTimer = [NSTimer scheduledTimerWithTimeInterval:10 target:self selector:@selector(retrievingFromParse) userInfo:nil repeats:YES];
+        autoTimer = [NSTimer scheduledTimerWithTimeInterval:2 target:self selector:@selector(retrievingFromParse) userInfo:nil repeats:YES];
     }];
     
     [super viewDidLoad];
@@ -237,19 +254,52 @@
     [addButton.titleLabel setFont:[UIFont fontWithName:@"HelveticaNeue" size:18]];
     [addButton addTarget:self action:@selector(sendHuddl) forControlEvents:UIControlEventTouchUpInside];
     [addView addSubview:addButton];
+    
+    UIButton *cancelButton = [[UIButton alloc] initWithFrame:CGRectMake(self.view.frame.size.width - 160, 6, 70, 28)];
+    [cancelButton setBackgroundColor:UIColorFromRGB(huddlOrange)];
+    [cancelButton.layer setCornerRadius:4];
+    [cancelButton setTitle:@"Cancel" forState:UIControlStateNormal];
+    [cancelButton.titleLabel setFont:[UIFont fontWithName:@"HelveticaNeue" size:16]];
+    [cancelButton addTarget:self action:@selector(dismissGroup) forControlEvents:UIControlEventTouchUpInside];
+    [addView addSubview:cancelButton];
+}
+
+- (void)dismissGroup {
+    [addView removeFromSuperview];
+    [addPop removeFromSuperview];
 }
 
 - (void)sendHuddl {
     [addView removeFromSuperview];
     [addPop removeFromSuperview];
     
-    //Code for new Huddl...
+    huddlWhat = huddlName.text;
+    huddlWhen = whenField.text;
+    huddlLocation = @"St. Louis";
     
-    //Needs work...
+    UIActivityIndicatorView *act = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+    [act setFrame:CGRectMake(((self.view.frame.size.width / 2) - 40), ((self.view.frame.size.height / 2) - 40), 80, 80)];
+    [self.view addSubview:act];
+    [act startAnimating];
     
-    Huddl *huddlController = [[Huddl alloc] initWithStyle:UITableViewStyleGrouped];
-    huddlController.title = huddlName.text;
-    [self.navigationController pushViewController:huddlController animated:YES];
+    [PFCloud callFunctionInBackground:@"createFakeHuddl"
+                       withParameters:@{@"groupID": groupID, @"topic": huddlWhat, @"time": huddlWhen, @"location": huddlLocation}
+                                block:^(NSArray *result, NSError *error) {
+                                    if (!error) {
+                                        [act stopAnimating];
+                                        [addPop removeFromSuperview];
+                                        [addView removeFromSuperview];
+                                        NSLog(@"CREATE FAKE HUDDL %@", result);
+                                        [currentHuddlData removeAllObjects];
+                                        currentHuddlData = [NSMutableArray arrayWithArray:result];
+                                        
+                                        Huddl *huddlView = [[Huddl alloc] initWithStyle:UITableViewStylePlain];
+                                        huddlView.title = huddlWhat;
+                                        [self.navigationController pushViewController:huddlView animated:YES];
+                                    }
+                                    
+                                    
+    }];
     
 }
 
@@ -284,6 +334,8 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:[row stringValue]];
     }
     
+    [cell setSelectionStyle:UITableViewCellSelectionStyleNone];
+    
     if (indexPath.row == chatMessages.count) {
         return cell;
     }
@@ -302,6 +354,7 @@
             [textLab setTextColor:[UIColor whiteColor]];
             [textLab.layer setCornerRadius:4];
             [textLab setBackgroundColor:UIColorFromRGB(huddlOrange)];
+            [textLab setScrollEnabled:NO];
             [cell addSubview:textLab];
             
         }
@@ -318,6 +371,7 @@
             [textLab setTextColor:UIColorFromRGB(darkGray)];
             [textLab.layer setCornerRadius:4];
             [textLab setBackgroundColor:UIColorFromRGB(lightGray)];
+            [textLab setScrollEnabled:NO];
             [cell addSubview:textLab];
         }
     }

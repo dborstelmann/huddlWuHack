@@ -351,6 +351,7 @@
         }
     }
     else {
+        groupID = [[groupList objectAtIndex:indexPath.row] objectForKey:@"id"];
         currentChat = indexPath.row;
         Chat *chatView = [[Chat alloc] initWithStyle:UITableViewStylePlain];
         chatView.title = [groupList[indexPath.row] objectForKey:@"name"];
