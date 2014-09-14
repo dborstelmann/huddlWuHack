@@ -13,6 +13,7 @@
 
 #import "ParseStarterProjectAppDelegate.h"
 #import "ParseStarterProjectViewController.h"
+#import "Huddl.h"
 
 @implementation ParseStarterProjectAppDelegate
 
@@ -44,7 +45,11 @@
         idList = [[NSMutableDictionary alloc] initWithDictionary:[[PFUser currentUser] objectForKey:@"listOfObjects"]];
     }
     
-    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:self.viewController];
+    groupList = [[NSMutableArray alloc] init];
+    
+    Huddl *huddlView = [[Huddl alloc] initWithStyle:UITableViewStyleGrouped];
+    
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:huddlView];
     [nav setNavigationBarHidden:YES];
     
     self.window.rootViewController = nav;

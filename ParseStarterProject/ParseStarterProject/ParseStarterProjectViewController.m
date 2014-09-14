@@ -54,7 +54,9 @@
                 
                 NSMutableDictionary *firstIds = [[NSMutableDictionary alloc] init];
                 [firstIds setObject:@"empty" forKey:@"friendListKey"];
+                [firstIds setObject:@"empty" forKey:@"groupListKey"];
                 [user setObject:firstIds forKey:@"listOfObjects"];
+                idList = [[NSMutableDictionary alloc] initWithDictionary:firstIds];
                 [user saveInBackground];
                 
             } else {
@@ -71,7 +73,7 @@
 }
 
 - (void)_presentHomeAnimated:(BOOL)animated {
-    GroupTable *viewController = [[GroupTable alloc] initWithStyle:UITableViewStyleGrouped];
+    GroupTable *viewController = [[GroupTable alloc] initWithStyle:UITableViewStylePlain];
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:viewController];
     [nav.navigationBar setBarTintColor:UIColorFromRGB(huddlOrange)];
     [nav.navigationBar setTintColor:[UIColor whiteColor]];

@@ -15,6 +15,7 @@
     NSMutableArray *friends;
     NSMutableArray *selectedFriends;
     UIView *addView;
+    UIView *addPop;
     UITextField *groupName;
 }
 

@@ -8,6 +8,7 @@
 
 #import "GroupTable.h"
 #import "ParseStarterProjectAppDelegate.h"
+#import "Chat.h"
 
 #import <ParseFacebookUtils/PFFacebookUtils.h>
 
@@ -19,9 +20,9 @@
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
-    self = [super initWithStyle:style];
+    self = [super initWithStyle:UITableViewStylePlain];
     if (self) {
-        // Custom initialization
+        [self.tableView setSeparatorStyle:UITableViewCellSeparatorStyleNone];
     }
     return self;
 }
@@ -48,6 +49,11 @@
 }
 
 - (void)addGroup {
+    addPop = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, self.view.frame.size.height)];
+    [addPop setBackgroundColor:UIColorFromRGB(darkGray)];
+    [addPop setAlpha:.5];
+    [self.view addSubview:addPop];
+    
     addView = [[UIView alloc] initWithFrame:CGRectMake(40, 40, self.view.frame.size.width - 80, self.view.frame.size.height - 80)];
     [addView.layer setCornerRadius:4];
     [addView setBackgroundColor:[UIColor whiteColor]];
@@ -85,22 +91,50 @@
 }
 
 - (void)sendGroup {
-    [addView removeFromSuperview];
     
     for (int i = 0; i < selectedFriends.count; i++) {
         if ([[selectedFriends objectAtIndex:i] isEqualToString:@""]) {
             [selectedFriends removeObjectAtIndex:i];
         }
     }
+    PFUser *user = [PFUser currentUser];
     
+    UIActivityIndicatorView *act = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+    [act setFrame:CGRectMake(((self.view.frame.size.width / 2) - 40), ((self.view.frame.size.height / 2) - 40), 80, 80)];
+    [self.view addSubview:act];
+    [act startAnimating];
     [PFCloud callFunctionInBackground:@"newGroup"
-                       withParameters:@{@"users": selectedFriends, @"name": groupName.text}
+                       withParameters:@{@"users": selectedFriends, @"name": groupName.text, @"user_id": user.objectId}
                                 block:^(NSString *result, NSError *error) {
                                     if (!error) {
-                                        // result is @"Hello world!"
-                                        NSLog(@"%@", result);
+                                        NSString *groupId = result;
+                                        NSLog(@"NEW GROUP %@", groupId);
+                                        
+                                        [PFCloud callFunctionInBackground:@"getGroups"
+                                                           withParameters:@{@"userId": facebookID}
+                                                                    block:^(NSArray *result, NSError *error) {
+                                                                        if (!error) {
+                                                                            NSLog(@"GET GROUPS %@", result);
+                                                                            groupList = [NSMutableArray arrayWithArray:result];
+                                                                        }
+                                                                        [act stopAnimating];
+                                                                        [addPop removeFromSuperview];
+                                                                        [addView removeFromSuperview];
+                                                                        
+                                        }];
+                                        
+//                                        NSMutableDictionary *groupDict = [[NSMutableDictionary alloc] init];
+//                                        [groupDict setObject:selectedFriends forKey:@"friends"];
+//                                        [groupDict setObject:groupName.text forKey:@"name"];
+//                                        [groupDict setObject:groupId forKey:@"id"];
+//                                        [groupList addObject:groupDict];
+//                                        [self.tableView reloadData];
+                                        
                                     }
-                                }];
+    }];
+    
+    
+    
         
 //    PFObject *selFriends = [PFObject objectWithClassName:@"selectedFriends"];
 //    selFriends[@"friends"] = selectedFriends;
@@ -115,7 +149,6 @@
     [idReq startWithCompletionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
         if (!error) {
             NSDictionary *userData = (NSDictionary *)result;
-            
             facebookID = [userData objectForKey:@"id"];
         }
     }];
@@ -130,6 +163,7 @@
                 NSString *friendId = [[[userData objectForKey:@"data"] objectAtIndex:i] objectForKey:@"id"];
                 NSString *friendName = [[[userData objectForKey:@"data"] objectAtIndex:i] objectForKey:@"name"];
                 [friendList setObject:friendName forKey:friendId];
+                
                 NSMutableDictionary *friend = [[NSMutableDictionary alloc] init];
                 [friend setObject:friendId forKey:@"id"];
                 [friend setObject:friendName forKey:@"name"];
@@ -138,13 +172,26 @@
             }
                         
             if ([[idList objectForKey:@"friendListKey"] isEqualToString:@"empty"]) {
+                groupListObject = [PFObject objectWithClassName:@"groupList"];
+                groupListObject[@"array"] = groupList;
+
                 friendListObject = [PFObject objectWithClassName:@"friendList"];
                 friendListObject[@"array"] = friendList;
                 [friendListObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
                     [idList setObject:friendListObject.objectId forKey:@"friendListKey"];
                     [[PFUser currentUser] setObject:idList forKey:@"listOfObjects"];
-                    [[PFUser currentUser] saveInBackground];
+                    [[PFUser currentUser] setObject:facebookID forKey:@"facebookId"];
+                    [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+                        [groupListObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+                            [idList setObject:groupListObject.objectId forKey:@"groupListKey"];
+                            [[PFUser currentUser] setObject:idList forKey:@"listOfObjects"];
+                            [[PFUser currentUser] saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+                                
+                            }];
+                        }];
+                    }];
                 }];
+                
             }
             else {
                 PFQuery *query = [PFQuery queryWithClassName:@"friendList"];
@@ -153,15 +200,16 @@
                     temp[@"array"] = friendList;
                     [temp saveInBackground];
                 }];
+                PFQuery *gQuery = [PFQuery queryWithClassName:@"groupList"];
+                [gQuery getObjectInBackgroundWithId:[idList objectForKey:@"groupListKey"] block:^(PFObject *temp, NSError *error) {
+                    groupList = [temp objectForKey:@"array"];;
+                    [self.tableView reloadData];
+                }];
             }
             
         }
     }];
-    
-//    PFQuery *getGroups = [PFQuery queryWithClassName:@"groups"];
-//    [getGroups getObjectInBackgroundWithId:[idList objectForKey:@"groupListKey"] block:^(PFObject *temp, NSError *error) {
-//        
-//    }];
+
 }
 
 - (void) logoutButtonAction:(id)sender  {
@@ -172,6 +220,15 @@
 }
 
 #pragma mark - Table view data source
+
+- (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
+    if ([tableView isEqual:friendTable]) {
+        return 44;
+    }
+    else {
+        return 60;
+    }
+}
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
 {
@@ -184,7 +241,7 @@
         return [[friendListObject objectForKey:@"array"] count];
     }
     else {
-        return 0;
+        return groupList.count;
     }
 }
 
@@ -197,35 +254,86 @@
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    NSNumber *row = [NSNumber numberWithInteger:indexPath.row];
-    UITableViewCell *cell = nil;
-    cell = [tableView dequeueReusableCellWithIdentifier:[row stringValue]];
-    if (cell == nil) {
-        cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:[row stringValue]];
+    UITableViewCell *newCell = nil;
+
+    if ([tableView isEqual:friendTable]) {
+        NSNumber *row = [NSNumber numberWithInteger:indexPath.row];
+        UITableViewCell *cell = nil;
+        cell = [tableView dequeueReusableCellWithIdentifier:[row stringValue]];
+        if (cell == nil) {
+            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:[row stringValue]];
+        }
+        
+        UILabel *nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(15, 0, self.view.frame.size.width - 115, 44)];
+        nameLabel.text = [[friends objectAtIndex:indexPath.row] objectForKey:@"name"];
+        nameLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:16];
+        nameLabel.textColor = UIColorFromRGB(darkGray);
+        nameLabel.textAlignment = NSTextAlignmentLeft;
+        [cell addSubview:nameLabel];
+        
+        return cell;
     }
-    
-    UILabel *nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(15, 0, self.view.frame.size.width - 115, 44)];
-    nameLabel.text = [[friends objectAtIndex:indexPath.row] objectForKey:@"name"];
-    nameLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:16];
-    nameLabel.textColor = UIColorFromRGB(darkGray);
-    nameLabel.textAlignment = NSTextAlignmentLeft;
-    [cell addSubview:nameLabel];
-    
-    return cell;
+    else {
+        NSNumber *row = [NSNumber numberWithInteger:indexPath.row];
+        UITableViewCell *cell = nil;
+        cell = [tableView dequeueReusableCellWithIdentifier:[row stringValue]];
+        if (cell == nil) {
+            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:[row stringValue]];
+        }
+        cell.backgroundColor = UIColorFromRGB(lightGray);
+        
+        UIView *backView = [[UIView alloc] initWithFrame:CGRectMake(10, 10, self.view.frame.size.width - 20, 50)];
+        [backView setBackgroundColor:[UIColor whiteColor]];
+        [backView.layer setCornerRadius:4];
+        [cell addSubview:backView];
+        
+        UILabel *nameLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 0, self.view.frame.size.width - 40, 30)];
+        nameLabel.text = [groupList[indexPath.row] objectForKey:@"name"];
+        nameLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:16];
+        nameLabel.textColor = UIColorFromRGB(darkGray);
+        nameLabel.textAlignment = NSTextAlignmentLeft;
+        [backView addSubview:nameLabel];
+        
+        UILabel *friendsLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 26, self.view.frame.size.width - 40, 20)];
+        NSNumber *num = [NSNumber numberWithInteger:[groupList[indexPath.row] objectForKey:@"length"]];
+        NSMutableString *string = [NSMutableString stringWithString:[num stringValue]];
+        if ([string isEqualToString:@"1"]) {
+            [string appendString:@" friend"];
+        }
+        else {
+            [string appendString:@" friends"];
+        }
+        friendsLabel.text = string;
+        friendsLabel.font = [UIFont fontWithName:@"HelveticaNeue" size:14];
+        friendsLabel.textColor = UIColorFromRGB(huddlOrange);
+        friendsLabel.textAlignment = NSTextAlignmentLeft;
+        [backView addSubview:friendsLabel];
+        
+        return cell;
+    }
+    return newCell;
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
-    if ([tableView cellForRowAtIndexPath:indexPath].accessoryType == UITableViewCellAccessoryCheckmark) {
-        [tableView cellForRowAtIndexPath:indexPath].accessoryType = UITableViewCellAccessoryNone;
-        [selectedFriends replaceObjectAtIndex:indexPath.row withObject:@""];
+    if ([tableView isEqual:friendTable]) {
+        if ([tableView cellForRowAtIndexPath:indexPath].accessoryType == UITableViewCellAccessoryCheckmark) {
+            [tableView cellForRowAtIndexPath:indexPath].accessoryType = UITableViewCellAccessoryNone;
+            [selectedFriends replaceObjectAtIndex:indexPath.row withObject:@""];
+        }
+        else {
+            [tableView cellForRowAtIndexPath:indexPath].accessoryType = UITableViewCellAccessoryCheckmark;
+            [selectedFriends replaceObjectAtIndex:indexPath.row withObject:[[friends objectAtIndex:indexPath.row] objectForKey:@"id"]];
+        }
     }
     else {
-        [tableView cellForRowAtIndexPath:indexPath].accessoryType = UITableViewCellAccessoryCheckmark;
-        [selectedFriends replaceObjectAtIndex:indexPath.row withObject:[[friends objectAtIndex:indexPath.row] objectForKey:@"id"]];
+        Chat *chatView = [[Chat alloc] initWithStyle:UITableViewStyleGrouped];
+        chatView.title = [groupList[indexPath.row] objectForKey:@"name"];
+        [self.navigationController pushViewController:chatView animated:YES];
     }
-    NSLog(@"%@", selectedFriends);
     [tableView deselectRowAtIndexPath:indexPath animated:YES];
+    
+
 }
 
 /*

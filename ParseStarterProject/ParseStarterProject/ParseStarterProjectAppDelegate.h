@@ -22,11 +22,16 @@
 
 static int facebookBlue = 0x3B5998;
 static int huddlOrange = 0xf15b25;
+static int huddlBlue = 0x4698C2;
+static int huddlRed = 0xCC0000;
 static int lightGray = 0xD6D6D6;
 static int darkGray = 0x444444;
 
 NSString *facebookID;
 
 NSMutableDictionary *idList;
+NSMutableArray *groupList;
+NSMutableArray *currentGroupHuddlList;
 
 PFObject *friendListObject;
+PFObject *groupListObject;
