@@ -30,21 +30,84 @@
     [self.tableView setBackgroundColor:UIColorFromRGB(lightGray)];
     currentHuddlData = [[NSMutableArray alloc] init];
     
-//    [PFCloud callFunctionInBackground:@"getHuddls"
-//                       withParameters:@{@"groupID": groupID}
-//                                block:^(NSArray *result, NSError *error) {
-//                                    if (!error) {
-//                                        NSLog(@"GET HUDDLS %@", result);
-//                                        [groupList removeAllObjects];
-//                                        groupList = [NSMutableArray arrayWithArray:result];
-//                                        [self.tableView reloadData];
-//                                        
-//                                        Huddl *huddlView = [[Huddl alloc] initWithStyle:UITableViewStylePlain];
-//                                        [self.navigationController pushViewController:huddlView animated:YES];
-//                                    }
-//                                    
-//                                    
-//    }];
+    NSMutableDictionary *test1 = [[NSMutableDictionary alloc] init];
+    [test1 setObject:@"Italian" forKey:@"categories"];
+    [test1 setObject:@"Sauce on the Side" forKey:@"name"];
+    [test1 setObject:@"$$$" forKey:@"price"];
+    [test1 setObject:@"7.7" forKey:@"rating"];
+    [test1 setObject:@"0" forKey:@"upVotes"];
+    [test1 setObject:@"0" forKey:@"downVotes"];
+    
+    NSMutableDictionary *test2 = [[NSMutableDictionary alloc] init];
+    [test2 setObject:@"Ice Cream" forKey:@"categories"];
+    [test2 setObject:@"Ted Drewes" forKey:@"name"];
+    [test2 setObject:@"$$" forKey:@"price"];
+    [test2 setObject:@"7.6" forKey:@"rating"];
+    [test2 setObject:@"0" forKey:@"upVotes"];
+    [test2 setObject:@"0" forKey:@"downVotes"];
+    
+    NSMutableDictionary *test3 = [[NSMutableDictionary alloc] init];
+    [test3 setObject:@"Pizza" forKey:@"categories"];
+    [test3 setObject:@"PW Pizza" forKey:@"name"];
+    [test3 setObject:@"$$" forKey:@"price"];
+    [test3 setObject:@"8.2" forKey:@"rating"];
+    [test3 setObject:@"0" forKey:@"upVotes"];
+    [test3 setObject:@"0" forKey:@"downVotes"];
+    
+    NSMutableDictionary *test4 = [[NSMutableDictionary alloc] init];
+    [test4 setObject:@"Italian" forKey:@"categories"];
+    [test4 setObject:@"Anthonio's Tavern" forKey:@"name"];
+    [test4 setObject:@"$" forKey:@"price"];
+    [test4 setObject:@"7.9" forKey:@"rating"];
+    [test4 setObject:@"0" forKey:@"upVotes"];
+    [test4 setObject:@"0" forKey:@"downVotes"];
+    
+    NSMutableDictionary *test5 = [[NSMutableDictionary alloc] init];
+    [test5 setObject:@"Pizza" forKey:@"categories"];
+    [test5 setObject:@"PI" forKey:@"name"];
+    [test5 setObject:@"$$" forKey:@"price"];
+    [test5 setObject:@"9.0" forKey:@"rating"];
+    [test5 setObject:@"0" forKey:@"upVotes"];
+    [test5 setObject:@"0" forKey:@"downVotes"];
+    
+    NSMutableDictionary *test6 = [[NSMutableDictionary alloc] init];
+    [test6 setObject:@"American" forKey:@"categories"];
+    [test6 setObject:@"Iron Barley" forKey:@"name"];
+    [test6 setObject:@"$$" forKey:@"price"];
+    [test6 setObject:@"8.4" forKey:@"rating"];
+    [test6 setObject:@"0" forKey:@"upVotes"];
+    [test6 setObject:@"0" forKey:@"downVotes"];
+    
+    NSMutableDictionary *test7 = [[NSMutableDictionary alloc] init];
+    [test7 setObject:@"Barbeque" forKey:@"categories"];
+    [test7 setObject:@"Pappy's Smokehouse" forKey:@"name"];
+    [test7 setObject:@"$$" forKey:@"price"];
+    [test7 setObject:@"9.5" forKey:@"rating"];
+    [test7 setObject:@"0" forKey:@"upVotes"];
+    [test7 setObject:@"0" forKey:@"downVotes"];
+    
+    [currentHuddlData addObject:test1];
+    [currentHuddlData addObject:test2];
+    [currentHuddlData addObject:test3];
+    [currentHuddlData addObject:test4];
+    [currentHuddlData addObject:test5];
+    [currentHuddlData addObject:test6];
+    [currentHuddlData addObject:test7];
+    
+    huddlList = [[NSMutableArray alloc] init];
+    
+    [PFCloud callFunctionInBackground:@"getHuddls"
+                       withParameters:@{@"groupID": groupID}
+                                block:^(NSArray *result, NSError *error) {
+                                    if (!error) {
+                                        NSLog(@"GET HUDDLS %@", result);
+                                        [huddlList removeAllObjects];
+                                        huddlList = [NSMutableArray arrayWithArray:result];
+                                        [self.tableView reloadData];
+                                    }
+                                    
+                                    
+    }];
     
     chatMessages = [[NSMutableArray alloc] init];
     
@@ -142,6 +205,7 @@
         [chatField resignFirstResponder];
         PFUser *user = [PFUser currentUser];
         [chatMessages addObject:@{@"text": chatField.text, @"owner": user.objectId}];
+        NSLog(@"%@", chatMessages);
         PFObject *chatObject = [PFObject objectWithClassName:@"HuddlGroup"];
         chatObject[@"chats"] = chatMessages;
         chatObject.objectId = stringId;
@@ -284,15 +348,26 @@
     
     [PFCloud callFunctionInBackground:@"createFakeHuddl"
                        withParameters:@{@"groupID": groupID, @"topic": huddlWhat, @"time": huddlWhen, @"location": huddlLocation}
-                                block:^(NSArray *result, NSError *error) {
+                                block:^(NSData *result, NSError *error) {
                                     if (!error) {
                                         [act stopAnimating];
                                         [addPop removeFromSuperview];
                                         [addView removeFromSuperview];
                                         NSLog(@"CREATE FAKE HUDDL %@", result);
-                                        [currentHuddlData removeAllObjects];
-                                        currentHuddlData = [NSMutableArray arrayWithArray:result];
                                         
+//                                        NSString *jsonString = result;
+//                                        NSData *jsonData = [jsonString dataUsingEncoding:NSUTF8StringEncoding];
+//                                        NSError *error = nil;
+//                                        NSArray *myArray = [NSJSONSerialization JSONObjectWithData:jsonData options:NSJSONReadingMutableContainers error:&error];
+
+                                        
+                                        
+//                                        
+//                                        [currentHuddlData removeAllObjects];
+//                                        currentHuddlData = [NSMutableArray arrayWithArray:hi];
+//                                        
+//                                        NSLog(@"%@", currentHuddlData);
+//                                        
                                         Huddl *huddlView = [[Huddl alloc] initWithStyle:UITableViewStylePlain];
                                         huddlView.title = huddlWhat;
                                         [self.navigationController pushViewController:huddlView animated:YES];
