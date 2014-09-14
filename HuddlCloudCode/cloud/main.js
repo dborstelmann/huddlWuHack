@@ -16,7 +16,7 @@ Parse.Cloud.define("newGroup", function(request, response){
 
     users.push(sender);
 
-    var huddlGroup = new HuddlGroup({users: users, name: name});
+    var huddlGroup = new HuddlGroup();
     huddlGroup.set("name", name);
     huddlGroup.set("users", users);
 
@@ -26,35 +26,78 @@ Parse.Cloud.define("newGroup", function(request, response){
 
     }, {
       success: function(huddlGroup){
-      
+        var cnt = 0;
 
         for (var i=0; i < users.length; i++){
 
           var queue = new Parse.Query(UserQueue);
           var userID;
-
-          Parse.Cloud.run( "getUserByFacebook", { user: users[i] },{
+          Parse.Cloud.run("getUserByFacebook", {user: users[i]}, {
             success: function(result){
-             
               Parse.Cloud.run( "addGroupToUserGroupList", {groupId: huddlGroup.id, user: result},
                 {
                   success: function(result){
-                  response.success(huddlGroup.id);
-                }
-              });
+                    ++cnt;
+                    if( cnt == users.length){
+                      response.success(huddlGroup.id);
+                    }
+                  }
 
-            },
-            error: function(error){
-              response.error("Issue")
+              });              
             }
-          });   
+          });  
         }
+        
       },
       error: function(huddlGroup, error){
         response.error("That didn't seem to work");
       }
   });
     
+});
+
+
+//Request {userID: <users objectId>}
+//Response {groupList}
+Parse.Cloud.define("getGroups", function(request, response){
+  Parse.Cloud.useMasterKey();
+
+  var usersId = request.params.userId;
+  var Users = Parse.Object.extend("User");
+  var userQueue = new Parse.Query(Users);
+  userQueue.equalTo("objectId", usersId);
+  userQueue.first({
+    success: function(user) {
+      var ListKeyObject = user.get('listOfObjects');
+      var groupListId = ListKeyObject.groupListKey;
+
+      var GroupList = Parse.Object.extend("groupList");
+      var queue = new Parse.Query(GroupList);
+      queue.equalTo("objectId", groupListId);
+      queue.first({
+        success: function(result){
+          var array = [];
+          var cnt = 0;
+            for(var i = 0; i < result.get('array').length; i++){
+              var a = result.get('array');
+
+              Parse.Cloud.run("getGroupByID", {group: a[i]}, {
+                success: function(group){
+                  array.push(group);
+
+                  
+                  if(cnt == a.length-1){
+                    response.success(array);
+                  }
+                  cnt++;
+                  
+                }
+              });
+            }
+        }
+      });    
+    }, error: function(error){response.error(error)}
+  });
 });
 
 
@@ -103,14 +146,36 @@ Parse.Cloud.define("newGroup", function(request, response){
 
 // }
 
+//Request {groupId: <groups objectID>, userID: <users objectId>}
+//Response none
+// Parse.Cloud.define("leaveGroup", function(request, response){
+//  Parse.Cloud.useMasterKey();
+//   var groupID = request.params.groupId;
+//   var userID = request.params.user;
+
+//   var HuddlUser = Parse.Object.extend("User");
+//   var queue = new Parse.Query(HuddlUser);
+//   queue.get(userID, {
+//     success: function(result){
+//       var groupList = result.get("groupList");
+      
+//       Parse.Cloud.run("getUserGroupList", {groupListId: groupList}, {
+//         success: function (result){
+//           //remove group from user group list
+//           response.success("Succesfully left the group");
+//         }
+//       })
+//     }
+//   });
+
+//   response.success("Group id added to groupList in User");
+// });
+
 /**
           HELPER FUNCTIONS
 **/
 
-// Parse.Cloud.define("createHuddl", function(request, response){
-//   var 
 
-// });
 
 //Request {user: <facebook id>}
 //Reponse user's objectId
@@ -122,7 +187,7 @@ Parse.Cloud.define("getUserByFacebook", function(request, response){
 
   queue.find({
     success: function(results) {
-      for( var i=0; i < results.length; i++){
+      for( var i = 0; i < results.length; i++){
         var object = results[i];
         response.success( object.id );
       }
@@ -142,7 +207,8 @@ Parse.Cloud.define("getGroupByID", function(request, response){
   queue.get(request.params.group, {
     success: function(result){
         var object = result;
-        response.success( {id: object.id, name: object.get('name'), } );
+        console.log(object);
+        response.success( {id: object.id, name: object.get('name'), length: ""+object.get('users').length} );
     },
     error: function(error) {
       response.error('A various error: ');
@@ -150,110 +216,42 @@ Parse.Cloud.define("getGroupByID", function(request, response){
   });
 });
 
-//Request {groupId: <groups objectID>, userID: <users objectId>}
-//Response none
-Parse.Cloud.define("leaveGroup", function(request, response){
- Parse.Cloud.useMasterKey();
-  var groupID = request.params.groupId;
-  var userID = request.params.user;
 
-  var HuddlUser = Parse.Object.extend("User");
-  var queue = new Parse.Query(HuddlUser);
-  queue.get(userID, {
-    success: function(result){
-      var groupList = result.get("groupList");
-      
-      Parse.Cloud.run("getUserGroupList", {groupListId: groupList}, {
-        success: function (result){
-          //remove group from user group list
-          response.success("Succesfully left the group");
-        }
-      })
-    }
-  });
-
-  response.success("Group id added to groupList in User");
-});
 
 //Request {groupId: <groups objectID>, userID: <users objectId>}
 //Response none
 Parse.Cloud.define("addGroupToUserGroupList", function(request, response){
  Parse.Cloud.useMasterKey();
+
   var groupID = request.params.groupId;
   var userID = request.params.user;
 
   var HuddlUser = Parse.Object.extend("User");
   var queue = new Parse.Query(HuddlUser);
-  queue.get(userID, {
+  queue.equalTo("objectId", userID);
+  queue.first({
     success: function(user){
-      var groupList = user.get("groupList");
-      
-      Parse.Cloud.run("getUserGroupList", {groupListId: groupList}, {
-        success: function (list){
-          var groupArray = result.get('array');
 
-          response.success("Added group to groupsList");
-        }
-      })
-    }
-  });
-
-  response.success("Group id added to groupList in User");
-});
-
-//Request {userID: <users objectId>}
-//Response {groupList}
-Parse.Cloud.define("getUserGroupList", function(request, response){
-  Parse.Cloud.useMasterKey();
-  var usersId = request.params.userId;
-  var Users = Parse.Object.extend("Users");
-  var userQueue = new Parse.Query(Users);
-  userQueue.equalTo("objectId", usersId);
-  userQueue.find({
-    success: function(user) {
-
-    for ( var i = 0; i < user.length; i++){
-      console.log("recieved " + user.length + " users.");
-      var current = user[i];
-      var ListKeyObject = current.get('listOfObjects');
+      var ListKeyObject = user.get("listOfObjects");
       var groupListId = ListKeyObject.groupListKey;
-
+      
       var GroupList = Parse.Object.extend("groupList");
       var queue = new Parse.Query(GroupList);
-      queue.equalTo("objectId", usersId);
-      queue.find({
+      queue.equalTo("objectId", groupListId);
+      queue.first({
         success: function(result){
-          for ( var a = 0; a < result.length; a++){
-            
-            response.success(result[a]);
+
+            var array = result.get("array");
+            array.push(groupID);
+             console.log("THIS IS AN ARRAY", array);
+            result.set("array", array);
+            result.save();
+            response.success("Done");
           }
-        }
-      });
-
-      }    
-    }, error: function(error){response.error(error)}
-  });
-});
-
-//Request {userID: <facebook id>}
-// Return groupList
-Parse.Cloud.define("getGroups", function(request, response){
-   Parse.Cloud.useMasterKey();
-  var fbID = request.params.userId;
-  Parse.Cloud.run("getUserByFacebook", {user: fbID}, {
-    success: function(user){
-      Parse.Cloud.run("getUserGroupList", {userId: user}, {
-        success: function(result){
-          response.success(result);
-        }
-      });
+      });    
     }
   });
 });
-
-
-
-
 
 
 /**
@@ -263,11 +261,16 @@ Parse.Cloud.define("getGroups", function(request, response){
 **/
 var HuddlGroup = Parse.Object.extend("HuddlGroup", {
     initialize: function(attrs, options) {
-      this.users = attrs.users;
-      this.name = attrs.name;
-    this.huddlInstance = [];
+      this.huddlInstance = [];
     }
-  },{
+  },
+  {
+    setUser: function(user) {
+      this.users = attrs.users;
+    },
+    setName: function(name) {
+      this.name = attrs.name;
+    },
     addHuddlInstance: function(huddl) {
       this.huddlInstace.push(huddl);
       return huddl;
@@ -283,48 +286,70 @@ var HuddlGroup = Parse.Object.extend("HuddlGroup", {
     }
 });
 
-var HuddlInstance = Parse.Object.extend("HuddlInstance", {
-  initialize: function(attrs, options){
-    this.huddlGroup = attrs.groupID;
-    this.topic = attrs.topic;
-    this.time = attrs.time;
-    this.location = attrs.location;
-    this.suggestedHuddls = [];
+Parse.Cloud.define("createHuddl", function(request, response){
+  var  params = request.params,
+  groupID = params.groupId,
+  topic = params.topic,
+  time = params.time,
+  location = params.location;
+  var huddlInstance = HuddlInstance.joinToGroup(groupID)
+  huddlInstance.setTopic(topic);
+  huddlInstance.setTime(time);
+  huddlInstance.setLocation(location);
+  huddlInstance.pullSuggestedHuddls();
 
-    Parse.Cloud.run("getGroupByID", {group: groupID}, {
-      success: function(group){
-
-      }
-    });
-  }
-},
-{
-  pullSuggestedHuddls: function() {
-    var fourSqrData, 
-      topic = this.topic,
-      location = this.location;
-
-  Parse.Cloud.httpRequest({
-      url: "https://api.foursquare.com/v2/venues/explore",
-      params: {
-        client_id: "GXHC20OCJLQPNYSMEDZBATGWSZMPMRWR1SMSG1TIHSR0KELY",
-        client_secret: "5XZ5CHX1YE3WFZHL2EM3BAJXPLHDXWWCXFTXZQNWEKQWBHFB",
-        v: 20130815,
-        near: location,
-        query: topic,
-      },
-
-      success: function(httpResponse){
-        fourSqrData = httpResponse.response.groups[0].items;
-        console.log(fourSqrData);
-      },
-      error: function(httpResponse){}
-    });
-  },
-
-  filterHuddlData: function(huddlArray){
-  },
-  
 });
+
+var HuddlInstance = Parse.Object.extend("HuddlInstance", {
+    initialize: function(attrs, options){
+      this.suggestedHuddls = [];
+    }
+  },
+  {
+    joinToGroup: function(groupID){
+      Parse.Cloud.run("getGroupByID", {group: groupID}, {
+        success: function(group){
+          this.HuddlGroup = group;
+        }
+      });
+    },
+    setTopic: function(topic){
+      this.topic = topic;
+    },
+    setTime: function(time){
+      this.time = time; 
+    },
+    setLocation: function(location){
+      this.location = location;
+    },
+    pullSuggestedHuddls: function() {
+      var fourSqrData, 
+        topic = this.topic,
+        location = this.location;
+
+    Parse.Cloud.httpRequest({
+        url: "https://api.foursquare.com/v2/venues/explore",
+        params: {
+          client_id: "GXHC20OCJLQPNYSMEDZBATGWSZMPMRWR1SMSG1TIHSR0KELY",
+          client_secret: "5XZ5CHX1YE3WFZHL2EM3BAJXPLHDXWWCXFTXZQNWEKQWBHFB",
+          v: 20130815,
+          near: location,
+          query: topic,
+        },
+
+        success: function(httpResponse){
+          fourSqrData = httpResponse.response.groups[0].items;
+          console.log(fourSqrData);
+          this.rawData = fourSqrData;
+        },
+        error: function(httpResponse){}
+      });
+    },
+    getRawData: function(data){
+      return this.rawData;
+    },
+    filterHuddlData: function(huddlArray){
+    },  
+  });
 
 var HuddlSuggestion = Parse.Object.extend("HuddlSuggestion", {}, {});
