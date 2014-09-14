@@ -2,27 +2,29 @@
 // Use Parse.Cloud.define to define as many cloud functions as you want.
 // For example:
 
+/**
+    API Calls
+**/
+
 Parse.Cloud.define("newGroup", function(request, response){
   Parse.Cloud.useMasterKey();
-  /*
-    request {
-      [User IDs], Name
-    }
-  */
+    // Request users[facebook ids] user_id[user facebook id] name[name of group]
     var UserQueue = Parse.Object.extend("User");
     var name = request.params.name,
         users = request.params.users,
         sender = request.params.user_id;
 
     users.push(sender);
-
+    var blankChat = [];
     var huddlGroup = new HuddlGroup();
     huddlGroup.set("name", name);
     huddlGroup.set("users", users);
+    huddlGroup.set("chats", blankChat);
 
     huddlGroup.save({
       users: users,
-      name: name
+      name: name,
+      chats: blankChat
 
     }, {
       success: function(huddlGroup){
@@ -46,8 +48,7 @@ Parse.Cloud.define("newGroup", function(request, response){
               });              
             }
           });  
-        }
-        
+        } 
       },
       error: function(huddlGroup, error){
         response.error("That didn't seem to work");
@@ -100,6 +101,86 @@ Parse.Cloud.define("getGroups", function(request, response){
   });
 });
 
+//request groupID : groups id
+Parse.Cloud.define("getHuddls", function(request, response){
+  var groupID = request.params.groupID;
+
+  var HuddlGroup = Parse.Object.extend("HuddlGroup");
+  var queue = new Parse.Query(HuddlGroup);
+  queue.equalTo("objectId", groupID);
+  queue.first({
+    success: function(group){
+      response.success(group.get("huddls"));
+    }
+  });
+});
+
+Parse.Cloud.define("createFakeHuddl", function(request, response){
+   Parse.Cloud.useMasterKey();
+  var _ = require('underscore');
+  var  params = request.params,
+  groupID = params.groupID,
+  topic = params.topic,
+  time = params.time,
+  location = params.location; 
+
+  var huddlInstance = new HuddlInstance();
+
+  huddlInstance.set("groupID", groupID);
+  huddlInstance.set("topic", topic);
+  huddlInstance.set("time", time);
+  huddlInstance.set("location", location);
+  huddlInstance.set("suggestedHuddls", []);
+
+  var HuddlGroup = Parse.Object.extend("HuddlGroup");
+  var queue = new Parse.Query(HuddlGroup);
+  queue.equalTo("objectId", groupID);
+  queue.first({
+    success: function(group){
+      var huddlArray = [];
+
+      if( group.get("huddls") ){
+        huddlArray = group.get("huddls");
+      }
+      
+      huddlArray.push(huddlInstance.id);
+      group.set("huddls", huddlArray);
+      group.save();
+    }
+  });
+      var array = [];
+      var TestCollection = Parse.Collection.extend({
+        model: Parse.Object.extend("Data")
+      });
+      var collection = new TestCollection();
+      collection.fetch({
+        success: function(collection) {
+
+          collection.each(function(object){
+              array.push("{test"+object.id+": ", object, "}");
+          });
+          console.log(array);
+          huddlInstance.set("suggestedHuddls", array);
+          huddlInstance.save({
+            groupID: groupID,
+            topic: topic,
+            time: time,
+            location: location,
+            suggestedHuddls: array
+          },{
+            success: function(huddlInstance){
+              response.success(array)
+            }
+          });
+        },
+        error: function(collection, error){
+            response.error("sorry");
+        }
+      });
+
+    
+});
+
 
 
 // Parse.Cloud.define("groupAddUser", function(request, response){
@@ -122,29 +203,6 @@ Parse.Cloud.define("getGroups", function(request, response){
 //     huddlGroup.save();
 //     response.success();
 // });
-
-// Parse.Cloud.define("getSuggestion", function(request, response){
-//   /*
-//     request
-//   */
-//   var huddl
-
-// });
-
-// fourSquareJSON = function(a){
-
-//   var HuddlSuggestion = Parse.Object.extend("SuggestedHuddl");
-//   var SuggestionCollection = Parse.Collection.extend({
-//     model: huddlSuggstion;
-//   });
-
-//   var suggestionCollection = new SuggestionCollection();
-
-//   _.each( a, function(object){
-//     suggestionCollection.add( new HuddlSuggestion()
-//   });
-
-// }
 
 //Request {groupId: <groups objectID>, userID: <users objectId>}
 //Response none
@@ -285,9 +343,7 @@ var HuddlGroup = Parse.Object.extend("HuddlGroup", {
     }
 });
 
-Parse.Cloud.define("createHuddl", function(request, response){
-  var _ = require('underscore');
-  var huddlInstance = Parse.Object.extend("HuddlInstance", {
+var HuddlInstance = Parse.Object.extend("HuddlInstance", {
     initialize: function(attrs, options){
       this.suggestedHuddls = [];
     }
@@ -310,24 +366,22 @@ Parse.Cloud.define("createHuddl", function(request, response){
       this.location = location;
     },
     pullSuggestedHuddls: function() {
-      var fourSqrData, 
-        topic = this.topic,
-        location = this.location;
+      var array = [];
+      var TestCollection = Parse.Collection.extend({
+        model: Parse.Object.extend("Data")
+      });
+      var collection = new TestCollection();
 
-    Parse.Cloud.httpRequest({
-        url: "https://api.foursquare.com/v2/venues/explore",
-        params: {
-          client_id: "GXHC20OCJLQPNYSMEDZBATGWSZMPMRWR1SMSG1TIHSR0KELY",
-          client_secret: "5XZ5CHX1YE3WFZHL2EM3BAJXPLHDXWWCXFTXZQNWEKQWBHFB",
-          v: 20130815,
-          near: location,
-          query: topic,
+      collection.fetch({
+        success: function(collection) {
+          collection.each(function(object){
+              array.push( object);
+          });
+          response.success(array);
         },
-
-        success: function(httpResponse){
-          response.success(huddlInstance.filterHuddlData(httpResponse));
-        },
-        error: function(httpResponse){}
+        error: function(collection, error){
+            response.error("sorry");
+        }
       });
     },
     getRawData: function(data){
@@ -351,19 +405,81 @@ Parse.Cloud.define("createHuddl", function(request, response){
     }  
   });
 
-  var  params = request.params,
-  groupID = params.groupID,
-  topic = params.topic,
-  time = params.time,
-  location = params.location; 
-
-  huddlInstance.joinToGroup(groupID);
-  huddlInstance.setTopic(topic);
-  huddlInstance.setTime(time);
-  huddlInstance.setLocation(location);
-  huddlInstance.pullSuggestedHuddls();
-  });
-
-
-
-var HuddlSuggestion = Parse.Object.extend("HuddlSuggestion", {}, {});
+// Parse.Cloud.define("createHuddl", function(request, response){
+//   var _ = require('underscore');
+//   var huddlInstance = Parse.Object.extend("HuddlInstance", {
+//     initialize: function(attrs, options){
+//       this.suggestedHuddls = [];
+//     }
+//   },
+//   {
+//     joinToGroup: function(groupID){
+//       Parse.Cloud.run("getGroupByID", {group: groupID}, {
+//         success: function(group){
+//           this.HuddlGroup = group;
+//         }
+//       });
+//     },
+//     setTopic: function(topic){
+//       this.topic = topic;
+//     },
+//     setTime: function(time){
+//       this.time = time; 
+//     },
+//     setLocation: function(location){
+//       this.location = location;
+//     },
+//     pullSuggestedHuddls: function() {
+//       var fourSqrData, 
+//         topic = this.topic,
+//         location = this.location;
+ 
+//     Parse.Cloud.httpRequest({
+//         url: "https://api.foursquare.com/v2/venues/explore",
+//         params: {
+//           client_id: "GXHC20OCJLQPNYSMEDZBATGWSZMPMRWR1SMSG1TIHSR0KELY",
+//           client_secret: "5XZ5CHX1YE3WFZHL2EM3BAJXPLHDXWWCXFTXZQNWEKQWBHFB",
+//           v: 20130815,
+//           near: location,
+//           query: topic,
+//         },
+ 
+//         success: function(httpResponse){
+//           response.success(huddlInstance.filterHuddlData(httpResponse));
+//         },
+//         error: function(httpResponse){}
+//       });
+//     },
+//     getRawData: function(data){
+//       return this.rawData;
+//     },
+//     filterHuddlData: function(rawJSON){
+//       var a = rawJSON.response;
+//       console.log(_.isObject(a));
+//       // var ranking = [];
+//       // var i =0;
+//       // for (a in rawJSON.response.groups[0].items){
+//       //   var rank  = a.venue.rating                     ;
+//       //   var name  = a.venue.name                       ;
+//       //   var price = a.venue.price.currency             ;
+//       //   var cat   = a.venue.categories[0].shortName    ;
+//       //   var venue = new Array[rank,name,icon,price,cat];
+//       //   ranking[i]=venue;
+//       //   i++;
+//       // }
+//     return a;  // this
+//     }  
+//   });
+ 
+//   var  params = request.params,
+//   groupID = params.groupID,
+//   topic = params.topic,
+//   time = params.time,
+//   location = params.location; 
+ 
+//   huddlInstance.joinToGroup(groupID);
+//   huddlInstance.setTopic(topic);
+//   huddlInstance.setTime(time);
+//   huddlInstance.setLocation(location);
+//   huddlInstance.pullSuggestedHuddls();
+//   });
