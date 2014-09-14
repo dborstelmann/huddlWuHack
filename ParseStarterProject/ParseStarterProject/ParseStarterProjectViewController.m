@@ -78,7 +78,7 @@
     [nav.navigationBar setBarTintColor:UIColorFromRGB(huddlOrange)];
     [nav.navigationBar setTintColor:[UIColor whiteColor]];
     [nav.navigationBar setTranslucent:NO];
-    [nav.navigationBar setTitleTextAttributes:[NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"HelveticaNeue-Bold" size:18],NSFontAttributeName, [UIColor whiteColor], NSForegroundColorAttributeName, nil]];
+    [nav.navigationBar setTitleTextAttributes:[NSDictionary dictionaryWithObjectsAndKeys:[UIFont fontWithName:@"HelveticaNeue" size:18],NSFontAttributeName, [UIColor whiteColor], NSForegroundColorAttributeName, nil]];
     [self.navigationController presentViewController:nav animated:YES completion:nil];
 }
 

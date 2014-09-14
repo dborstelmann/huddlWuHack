@@ -31,7 +31,10 @@ NSString *facebookID;
 
 NSMutableDictionary *idList;
 NSMutableArray *groupList;
+NSMutableArray *chatGroups;
+NSMutableDictionary *chatAll;
 NSMutableArray *currentGroupHuddlList;
+NSInteger currentChat;
 
 PFObject *friendListObject;
 PFObject *groupListObject;

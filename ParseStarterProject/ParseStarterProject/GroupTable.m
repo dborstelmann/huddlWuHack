@@ -88,6 +88,19 @@
     [addButton.titleLabel setFont:[UIFont fontWithName:@"HelveticaNeue" size:18]];
     [addButton addTarget:self action:@selector(sendGroup) forControlEvents:UIControlEventTouchUpInside];
     [addView addSubview:addButton];
+    
+    UIButton *cancelButton = [[UIButton alloc] initWithFrame:CGRectMake(self.view.frame.size.width - 160, 6, 70, 28)];
+    [cancelButton setBackgroundColor:UIColorFromRGB(huddlOrange)];
+    [cancelButton.layer setCornerRadius:4];
+    [cancelButton setTitle:@"Cancel" forState:UIControlStateNormal];
+    [cancelButton.titleLabel setFont:[UIFont fontWithName:@"HelveticaNeue" size:16]];
+    [cancelButton addTarget:self action:@selector(dismissGroup) forControlEvents:UIControlEventTouchUpInside];
+    [addView addSubview:cancelButton];
+}
+
+- (void)dismissGroup {
+    [addView removeFromSuperview];
+    [addPop removeFromSuperview];
 }
 
 - (void)sendGroup {
@@ -104,43 +117,42 @@
     [self.view addSubview:act];
     [act startAnimating];
     [PFCloud callFunctionInBackground:@"newGroup"
-                       withParameters:@{@"users": selectedFriends, @"name": groupName.text, @"user_id": user.objectId}
+                       withParameters:@{@"users": selectedFriends, @"name": groupName.text, @"user_id": facebookID}
                                 block:^(NSString *result, NSError *error) {
                                     if (!error) {
                                         NSString *groupId = result;
                                         NSLog(@"NEW GROUP %@", groupId);
                                         
                                         [PFCloud callFunctionInBackground:@"getGroups"
-                                                           withParameters:@{@"userId": facebookID}
+                                                           withParameters:@{@"userId": user.objectId}
                                                                     block:^(NSArray *result, NSError *error) {
                                                                         if (!error) {
+                                                                            [act stopAnimating];
+                                                                            [addPop removeFromSuperview];
+                                                                            [addView removeFromSuperview];
                                                                             NSLog(@"GET GROUPS %@", result);
+                                                                            [groupList removeAllObjects];
                                                                             groupList = [NSMutableArray arrayWithArray:result];
+                                                                            [self.tableView reloadData];
+                                                                            [selectedFriends removeAllObjects];
+                                                                            selectedFriends = [[NSMutableArray alloc] init];
+                                                                            for (int i = 0; i < friends.count; i++) {
+                                                                                [selectedFriends addObject:@""];
+                                                                            }
                                                                         }
-                                                                        [act stopAnimating];
-                                                                        [addPop removeFromSuperview];
-                                                                        [addView removeFromSuperview];
+                                                                        
                                                                         
                                         }];
-                                        
+
 //                                        NSMutableDictionary *groupDict = [[NSMutableDictionary alloc] init];
 //                                        [groupDict setObject:selectedFriends forKey:@"friends"];
 //                                        [groupDict setObject:groupName.text forKey:@"name"];
 //                                        [groupDict setObject:groupId forKey:@"id"];
 //                                        [groupList addObject:groupDict];
-//                                        [self.tableView reloadData];
                                         
                                     }
     }];
     
-    
-    
-        
-//    PFObject *selFriends = [PFObject objectWithClassName:@"selectedFriends"];
-//    selFriends[@"friends"] = selectedFriends;
-//    selFriends[@"groupName"] = groupName.text;
-//    [selFriends saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
-//    }];
 }
 
 - (void)_loadData {
@@ -152,6 +164,8 @@
             facebookID = [userData objectForKey:@"id"];
         }
     }];
+    
+    PFUser *user = [PFUser currentUser];
     
     FBRequest *request = [FBRequest requestForMyFriends];
     [request startWithCompletionHandler:^(FBRequestConnection *connection, id result, NSError *error) {
@@ -174,7 +188,6 @@
             if ([[idList objectForKey:@"friendListKey"] isEqualToString:@"empty"]) {
                 groupListObject = [PFObject objectWithClassName:@"groupList"];
                 groupListObject[@"array"] = groupList;
-
                 friendListObject = [PFObject objectWithClassName:@"friendList"];
                 friendListObject[@"array"] = friendList;
                 [friendListObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
@@ -200,10 +213,22 @@
                     temp[@"array"] = friendList;
                     [temp saveInBackground];
                 }];
-                PFQuery *gQuery = [PFQuery queryWithClassName:@"groupList"];
-                [gQuery getObjectInBackgroundWithId:[idList objectForKey:@"groupListKey"] block:^(PFObject *temp, NSError *error) {
-                    groupList = [temp objectForKey:@"array"];;
-                    [self.tableView reloadData];
+                PFQuery *chatQuery = [PFQuery queryWithClassName:@"groupList"];
+                [chatQuery getObjectInBackgroundWithId:[idList objectForKey:@"groupListKey"] block:^(PFObject *temp, NSError *error) {
+                    chatGroups = temp[@"array"];
+
+                }];
+                
+                [PFCloud callFunctionInBackground:@"getGroups"
+                                   withParameters:@{@"userId": user.objectId}
+                                            block:^(NSArray *result, NSError *error) {
+                                                if (!error) {
+                                                    NSLog(@"GET GROUPS %@", result);
+                                                    groupList = [NSMutableArray arrayWithArray:result];
+                                                    [self.tableView reloadData];
+                                                }
+                                                
+                                                
                 }];
             }
             
@@ -295,8 +320,7 @@
         [backView addSubview:nameLabel];
         
         UILabel *friendsLabel = [[UILabel alloc] initWithFrame:CGRectMake(10, 26, self.view.frame.size.width - 40, 20)];
-        NSNumber *num = [NSNumber numberWithInteger:[groupList[indexPath.row] objectForKey:@"length"]];
-        NSMutableString *string = [NSMutableString stringWithString:[num stringValue]];
+        NSMutableString *string = [NSMutableString stringWithString:[groupList[indexPath.row] objectForKey:@"length"]];
         if ([string isEqualToString:@"1"]) {
             [string appendString:@" friend"];
         }
@@ -327,7 +351,8 @@
         }
     }
     else {
-        Chat *chatView = [[Chat alloc] initWithStyle:UITableViewStyleGrouped];
+        currentChat = indexPath.row;
+        Chat *chatView = [[Chat alloc] initWithStyle:UITableViewStylePlain];
         chatView.title = [groupList[indexPath.row] objectForKey:@"name"];
         [self.navigationController pushViewController:chatView animated:YES];
     }

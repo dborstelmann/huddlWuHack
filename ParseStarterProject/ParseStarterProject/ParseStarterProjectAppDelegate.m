@@ -46,10 +46,11 @@
     }
     
     groupList = [[NSMutableArray alloc] init];
+    chatGroups = [[NSMutableArray alloc] init];
     
-    Huddl *huddlView = [[Huddl alloc] initWithStyle:UITableViewStyleGrouped];
+    //Huddl *huddlView = [[Huddl alloc] initWithStyle:UITableViewStyleGrouped];
     
-    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:huddlView];
+    UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:self.viewController];
     [nav setNavigationBarHidden:YES];
     
     self.window.rootViewController = nav;

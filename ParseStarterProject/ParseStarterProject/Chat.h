@@ -15,6 +15,10 @@
     UIView *addPop;
     UITextField *huddlName;
     UITextField *whenField;
+    NSMutableArray *chatMessages;
+    UITextField *chatField;
+    NSString *stringId;
+    NSTimer *autoTimer;
 }
 
 @end

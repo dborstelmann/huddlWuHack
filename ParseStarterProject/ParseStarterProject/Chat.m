@@ -27,8 +27,30 @@
 
 - (void)viewDidLoad
 {
+    [self.tableView setBackgroundColor:UIColorFromRGB(lightGray)];
+    
+    chatMessages = [[NSMutableArray alloc] init];
+    
+    PFQuery *allQuery = [PFQuery queryWithClassName:@"HuddlGroup"];
+    [allQuery getObjectInBackgroundWithId:[chatGroups objectAtIndex:currentChat] block:^(PFObject *temp, NSError *error) {
+        chatMessages = temp[@"chats"];
+        stringId = temp.objectId;
+        [self.tableView reloadData];
+        autoTimer = [NSTimer scheduledTimerWithTimeInterval:10 target:self selector:@selector(retrievingFromParse) userInfo:nil repeats:YES];
+    }];
+    
     [super viewDidLoad];
     
+}
+
+- (void)retrievingFromParse {
+    PFQuery *allQuery = [PFQuery queryWithClassName:@"HuddlGroup"];
+    [allQuery getObjectInBackgroundWithId:[chatGroups objectAtIndex:currentChat] block:^(PFObject *temp, NSError *error) {
+        chatMessages = temp[@"chats"];
+        stringId = temp.objectId;
+        [self.tableView reloadData];
+
+    }];
 }
 
 - (void)didReceiveMemoryWarning
@@ -40,7 +62,27 @@
 #pragma mark - Table view data source
 
 - (CGFloat)tableView:(UITableView *)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath {
-    return 60;
+    CGFloat temp = 0;
+    if (chatMessages.count < 10) {
+        if (chatMessages.count == indexPath.row) {
+            return 400;
+        }
+        else {
+            temp = [self calcHeight:[[chatMessages objectAtIndex:indexPath.row] objectForKey:@"text"] fontSize:14 tableViewWidth:260];
+            if (temp < 44) {
+                temp = 44;
+            }
+            return temp + 10;
+        }
+    }
+    else {
+        temp = [self calcHeight:[[chatMessages objectAtIndex:indexPath.row] objectForKey:@"text"] fontSize:14 tableViewWidth:260];
+        if (temp < 44) {
+            temp = 44;
+        }
+        return temp + 10;
+    }
+    return 44;
 }
 
 - (NSInteger)numberOfSectionsInTableView:(UITableView *)tableView
@@ -50,7 +92,57 @@
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
-    return 10;
+    return chatMessages.count + 1;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForFooterInSection:(NSInteger)section
+{
+    UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 30)];
+    [view setBackgroundColor:UIColorFromRGB(lightGray)];
+    
+    chatField = [[UITextField alloc] initWithFrame:CGRectMake(4, 4, self.view.frame.size.width - 80, 22)];
+    chatField.delegate = self;
+    chatField.font = [UIFont fontWithName:@"HelveticaNeue" size:14];
+    chatField.returnKeyType = UIReturnKeyDone;
+    [chatField setBorderStyle:UITextBorderStyleRoundedRect];
+    [view addSubview:chatField];
+    
+    UIButton *send = [[UIButton alloc] initWithFrame:CGRectMake(self.view.frame.size.width - 68, 4, 58, 22)];
+    [send setTitle:@"Send" forState:UIControlStateNormal];
+    [send setTitleColor:UIColorFromRGB(huddlBlue) forState:UIControlStateNormal];
+    [send.layer setBorderColor:UIColorFromRGB(huddlBlue).CGColor];
+    [send.layer setBorderWidth:.5];
+    [send.layer setCornerRadius:4];
+    [send setBackgroundColor:[UIColor whiteColor]];
+    [send addTarget:self action:@selector(sendChat) forControlEvents:UIControlEventTouchUpInside];
+    [view addSubview:send];
+    
+    return view;
+}
+
+- (void)sendChat {
+    if (![chatField.text isEqualToString:@""]) {
+        [chatField resignFirstResponder];
+        PFUser *user = [PFUser currentUser];
+        [chatMessages addObject:@{@"text": chatField.text, @"owner": user.objectId}];
+        PFObject *chatObject = [PFObject objectWithClassName:@"HuddlGroup"];
+        chatObject[@"chats"] = chatMessages;
+        chatObject.objectId = stringId;
+        [chatObject saveInBackgroundWithBlock:^(BOOL succeeded, NSError *error) {
+            PFQuery *allQuery = [PFQuery queryWithClassName:@"HuddlGroup"];
+            [allQuery getObjectInBackgroundWithId:[chatGroups objectAtIndex:currentChat] block:^(PFObject *temp, NSError *error) {
+                [chatMessages removeAllObjects];
+                chatMessages = temp[@"chats"];
+                [self.tableView reloadData];
+                autoTimer = [NSTimer scheduledTimerWithTimeInterval:2 target:self selector:@selector(retrievingFromParse) userInfo:nil repeats:YES];
+            }];
+        }];
+    }
+
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForFooterInSection:(NSInteger)section {
+    return 30;
 }
 
 - (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
@@ -62,13 +154,7 @@
     UIView *view = [[UIView alloc] initWithFrame:CGRectMake(0, 0, self.view.frame.size.width, 120)];
     [view setBackgroundColor:[UIColor whiteColor]];
     
-//    UILabel *lab = [[UILabel alloc] initWithFrame:CGRectMake(10, 0, , 60)];
-//    lab.textColor = UIColorFromRGB(huddlOrange);
-//    lab.text = @"Number of Active Huddls: 6";
-//    lab.font = [UIFont fontWithName:@"HelveticaNeue" size:13];
-//    [view addSubview:lab];
-    
-    UIButton *active = [[UIButton alloc] initWithFrame:CGRectMake(10, 10, self.view.frame.size.width - 140, 40)];
+    UIButton *active = [[UIButton alloc] initWithFrame:CGRectMake(10, 10, self.view.frame.size.width - 150, 40)];
     [active setTitle:@"ACTIVE HUDDLS: 6" forState:UIControlStateNormal];
     [active setTitleColor:[UIColor whiteColor] forState:UIControlStateNormal];
     [active.titleLabel setFont:[UIFont fontWithName:@"HelveticaNeue" size:16]];
@@ -172,8 +258,25 @@
 }
 
 
+- (CGFloat)calcHeight:(NSString *)inputText fontSize:(CGFloat)fontSize tableViewWidth:(CGFloat)tableWidth {
+    NSString *text = inputText;
+    CGFloat width = tableWidth;
+    UIFont *font = [UIFont fontWithName:@"HelveticaNeue" size:fontSize];
+    NSAttributedString *attributedText = [[NSAttributedString alloc] initWithString:text attributes:@{NSFontAttributeName:font}];
+    CGRect rect = [attributedText boundingRectWithSize:(CGSize){width - 50, CGFLOAT_MAX}
+                                               options:NSStringDrawingUsesLineFragmentOrigin
+                                               context:nil];
+    CGSize size = rect.size;
+    CGFloat height = ceilf(size.height);
+    
+    
+    return height;
+}
+
+
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
+    PFUser *user = [PFUser currentUser];
     NSNumber *row = [NSNumber numberWithInteger:indexPath.row];
     UITableViewCell *cell = nil;
     cell = [tableView dequeueReusableCellWithIdentifier:[row stringValue]];
@@ -181,16 +284,61 @@
         cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:[row stringValue]];
     }
     
-    cell.textLabel.text = @"Chat text";
-    
+    if (indexPath.row == chatMessages.count) {
+        return cell;
+    }
+    if (chatMessages.count != 0) {
+        
+        if ([[[chatMessages objectAtIndex:indexPath.row] objectForKey:@"owner"] isEqualToString:user.objectId]) {
+            UITextView *textLab = [[UITextView alloc] init];
+            [textLab setEditable:NO];
+            CGFloat temp = [self calcHeight:[[chatMessages objectAtIndex:indexPath.row] objectForKey:@"text"] fontSize:14 tableViewWidth:320];
+            if (temp < 44) {
+                temp = 44;
+            }
+            [textLab setFrame:CGRectMake(100, 10, 210, temp)];
+            [textLab setText:[[chatMessages objectAtIndex:indexPath.row] objectForKey:@"text"]];
+            [textLab setFont:[UIFont fontWithName:@"HelveticaNeue" size:14]];
+            [textLab setTextColor:[UIColor whiteColor]];
+            [textLab.layer setCornerRadius:4];
+            [textLab setBackgroundColor:UIColorFromRGB(huddlOrange)];
+            [cell addSubview:textLab];
+            
+        }
+        else {
+            UITextView *textLab = [[UITextView alloc] init];
+            [textLab setEditable:NO];
+            CGFloat temp = [self calcHeight:[[chatMessages objectAtIndex:indexPath.row] objectForKey:@"text"] fontSize:14 tableViewWidth:320];
+            if (temp < 44) {
+                temp = 44;
+            }
+            [textLab setFrame:CGRectMake(10, 10, 210, temp)];
+            [textLab setText:[[chatMessages objectAtIndex:indexPath.row] objectForKey:@"text"]];
+            [textLab setFont:[UIFont fontWithName:@"HelveticaNeue" size:14]];
+            [textLab setTextColor:UIColorFromRGB(darkGray)];
+            [textLab.layer setCornerRadius:4];
+            [textLab setBackgroundColor:UIColorFromRGB(lightGray)];
+            [cell addSubview:textLab];
+        }
+    }
+
     return cell;
+}
+
+-(BOOL)textFieldShouldBeginEditing:(UITextField *)textField {
+    [autoTimer invalidate];
+    return YES;
 }
 
 -(BOOL)textFieldShouldReturn:(UITextField*)textField;
 {
     [textField resignFirstResponder];
-    
     return YES;
+}
+
+- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+{
+    [tableView deselectRowAtIndexPath:indexPath animated:YES];
 }
 
 /*
