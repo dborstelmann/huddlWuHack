@@ -243,7 +243,6 @@ Parse.Cloud.define("addGroupToUserGroupList", function(request, response){
 
             var array = result.get("array");
             array.push(groupID);
-             console.log("THIS IS AN ARRAY", array);
             result.set("array", array);
             result.save();
             response.success("Done");
@@ -287,20 +286,8 @@ var HuddlGroup = Parse.Object.extend("HuddlGroup", {
 });
 
 Parse.Cloud.define("createHuddl", function(request, response){
-  var  params = request.params,
-  groupID = params.groupId,
-  topic = params.topic,
-  time = params.time,
-  location = params.location;
-  var huddlInstance = HuddlInstance.joinToGroup(groupID)
-  huddlInstance.setTopic(topic);
-  huddlInstance.setTime(time);
-  huddlInstance.setLocation(location);
-  huddlInstance.pullSuggestedHuddls();
-
-});
-
-var HuddlInstance = Parse.Object.extend("HuddlInstance", {
+  var _ = require('underscore');
+  var huddlInstance = Parse.Object.extend("HuddlInstance", {
     initialize: function(attrs, options){
       this.suggestedHuddls = [];
     }
@@ -338,9 +325,7 @@ var HuddlInstance = Parse.Object.extend("HuddlInstance", {
         },
 
         success: function(httpResponse){
-          fourSqrData = httpResponse.response.groups[0].items;
-          console.log(fourSqrData);
-          this.rawData = fourSqrData;
+          response.success(huddlInstance.filterHuddlData(httpResponse));
         },
         error: function(httpResponse){}
       });
@@ -348,8 +333,37 @@ var HuddlInstance = Parse.Object.extend("HuddlInstance", {
     getRawData: function(data){
       return this.rawData;
     },
-    filterHuddlData: function(huddlArray){
-    },  
+    filterHuddlData: function(rawJSON){
+      var a = rawJSON.response;
+      console.log(_.isObject(a));
+      // var ranking = [];
+      // var i =0;
+      // for (a in rawJSON.response.groups[0].items){
+      //   var rank  = a.venue.rating                     ;
+      //   var name  = a.venue.name                       ;
+      //   var price = a.venue.price.currency             ;
+      //   var cat   = a.venue.categories[0].shortName    ;
+      //   var venue = new Array[rank,name,icon,price,cat];
+      //   ranking[i]=venue;
+      //   i++;
+      // }
+    return a;  // this
+    }  
   });
+
+  var  params = request.params,
+  groupID = params.groupID,
+  topic = params.topic,
+  time = params.time,
+  location = params.location; 
+
+  huddlInstance.joinToGroup(groupID);
+  huddlInstance.setTopic(topic);
+  huddlInstance.setTime(time);
+  huddlInstance.setLocation(location);
+  huddlInstance.pullSuggestedHuddls();
+  });
+
+
 
 var HuddlSuggestion = Parse.Object.extend("HuddlSuggestion", {}, {});
