@@ -3,6 +3,7 @@
 // For example:
 
 Parse.Cloud.define("newGroup", function(request, response){
+  Parse.Cloud.useMasterKey();
   /*
     request {
       [User IDs], Name
@@ -114,6 +115,7 @@ Parse.Cloud.define("newGroup", function(request, response){
 //Request {user: <facebook id>}
 //Reponse user's objectId
 Parse.Cloud.define("getUserByFacebook", function(request, response){
+ Parse.Cloud.useMasterKey();
   var UserQueue = Parse.Object.extend("User");
   var queue = new Parse.Query(UserQueue);
   queue.equalTo("facebookId" , ""+request.params.user);
@@ -134,6 +136,7 @@ Parse.Cloud.define("getUserByFacebook", function(request, response){
 //Request {group: <group objectId>}
 //Response {id: <group objectId>, name: <group name>, length<size of group>}
 Parse.Cloud.define("getGroupByID", function(request, response){
+ Parse.Cloud.useMasterKey();
   var HuddleGroup = Parse.Object.extend("HuddlGroup");
   var queue = new Parse.Query(HuddlGroup);
   queue.get(request.params.group, {
@@ -150,7 +153,7 @@ Parse.Cloud.define("getGroupByID", function(request, response){
 //Request {groupId: <groups objectID>, userID: <users objectId>}
 //Response none
 Parse.Cloud.define("leaveGroup", function(request, response){
-
+ Parse.Cloud.useMasterKey();
   var groupID = request.params.groupId;
   var userID = request.params.user;
 
@@ -175,7 +178,7 @@ Parse.Cloud.define("leaveGroup", function(request, response){
 //Request {groupId: <groups objectID>, userID: <users objectId>}
 //Response none
 Parse.Cloud.define("addGroupToUserGroupList", function(request, response){
-
+ Parse.Cloud.useMasterKey();
   var groupID = request.params.groupId;
   var userID = request.params.user;
 
@@ -201,28 +204,41 @@ Parse.Cloud.define("addGroupToUserGroupList", function(request, response){
 //Request {userID: <users objectId>}
 //Response {groupList}
 Parse.Cloud.define("getUserGroupList", function(request, response){
-  var groupListId = request.params.userId;
+  Parse.Cloud.useMasterKey();
+  var usersId = request.params.userId;
   var Users = Parse.Object.extend("Users");
   var userQueue = new Parse.Query(Users);
-  userQueue.get(userId, {
+  userQueue.equalTo("objectId", usersId);
+  userQueue.find({
     success: function(user) {
-      var ListKeyObject = user.get('listOfObjects');
+
+    for ( var i = 0; i < user.length; i++){
+      console.log("recieved " + user.length + " users.");
+      var current = user[i];
+      var ListKeyObject = current.get('listOfObjects');
       var groupListId = ListKeyObject.groupListKey;
 
       var GroupList = Parse.Object.extend("groupList");
       var queue = new Parse.Query(GroupList);
-      queue.get(groupListId, {
-      success: function(result){
-        response.success(result);
-      }
+      queue.equalTo("objectId", usersId);
+      queue.find({
+        success: function(result){
+          for ( var a = 0; a < result.length; a++){
+            
+            response.success(result[a]);
+          }
+        }
       });
-    }
+
+      }    
+    }, error: function(error){response.error(error)}
   });
 });
 
 //Request {userID: <facebook id>}
 // Return groupList
 Parse.Cloud.define("getGroups", function(request, response){
+   Parse.Cloud.useMasterKey();
   var fbID = request.params.userId;
   Parse.Cloud.run("getUserByFacebook", {user: fbID}, {
     success: function(user){
@@ -235,21 +251,9 @@ Parse.Cloud.define("getGroups", function(request, response){
   });
 });
 
-Parse.Cloud.define("addArray", function(request, response){
-  var foo = request.params.userId;
-  console.log(2+2);
-  console.log("foo: " + request.params);
-  var GroupList = Parse.Object.extend("groupList");
-  var queue =  new Parse.Query(GroupList);
-  queue.get(foo, {
-    success: function(object){
-      object.set("array", [5,6,7]);
-      response.success("done");
-    },
-    error: function(error){response.error("sorry")}
 
-  });
-});
+
+
 
 
 /**
