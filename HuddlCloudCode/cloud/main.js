@@ -15,14 +15,19 @@ Parse.Cloud.define("newGroup", function(request, response){
         sender = request.params.user_id;
 
     users.push(sender);
-
+    var blankChat = [];
     var huddlGroup = new HuddlGroup();
+    var customAcl =  new Parse.ACL();
+      customAcl.setPublicWriteAccess(true);
+          huddlGroup.setACL(customAcl);
     huddlGroup.set("name", name);
     huddlGroup.set("users", users);
+    huddlGroup.set("chats", blankChat);
 
     huddlGroup.save({
       users: users,
-      name: name
+      name: name,
+      chats: blankChat
 
     }, {
       success: function(huddlGroup){
