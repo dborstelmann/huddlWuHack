@@ -19,6 +19,7 @@ Parse.Cloud.define("newGroup", function(request, response){
     var huddlGroup = new HuddlGroup();
     var customAcl =  new Parse.ACL();
       customAcl.setPublicWriteAccess(true);
+      customAcl.setPublicReadAccess(true);
           huddlGroup.setACL(customAcl);
     huddlGroup.set("name", name);
     huddlGroup.set("users", users);
